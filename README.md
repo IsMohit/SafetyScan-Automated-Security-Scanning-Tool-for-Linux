@@ -192,7 +192,7 @@ docker run hello-world
 
 ```bash
 # Clone the repository
-git clone https://github.com/IsMohit/SafetyScan-Automated-Security-Scanning-Tool-for-Linux-.git
+git clone https://github.com/IsMohit/SafetyScan-Automated-Security-Scanning-Tool-for-Linux.git
 
 # Navigate to directory
 cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux-
@@ -500,7 +500,7 @@ safetyscan ./myapp --mode dast --start "npm start" --port 3001
 **Solution:**
 ```bash
 # Reinstall with proper permissions
-cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux-
+cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux
 sudo ./install.sh
 
 # OR manually copy
