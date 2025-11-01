@@ -24,6 +24,20 @@ DAST_SUCCESS=false
 SAST_ISSUES=0
 DAST_ISSUES=0
 
+# Python report generator location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+REPORT_GENERATOR="${SCRIPT_DIR}/report_generator.py"
+
+# Check for installed report generator
+if [[ ! -f "$REPORT_GENERATOR" ]]; then
+  # Try to find it in PATH (if installed globally)
+  if command -v safetyscan-report-generator &>/dev/null; then
+    REPORT_GENERATOR="safetyscan-report-generator"
+  elif [[ -f "/usr/local/bin/safetyscan-report-generator" ]]; then
+    REPORT_GENERATOR="/usr/local/bin/safetyscan-report-generator"
+  fi
+fi
+
 # -------- helpers --------
 usage() {
   cat <<USAGE
@@ -363,6 +377,64 @@ EOF
   docker rmi "$IMAGE_NAME" >/dev/null 2>&1 || true
 }
 
+# Generate comprehensive report using Python script
+generate_comprehensive_report() {
+  log "═══════════════════════════════════════════════════════════"
+  log "Generating Comprehensive Security Report..."
+  log "═══════════════════════════════════════════════════════════"
+  
+  # Check if Python is available
+  if ! command -v python3 &>/dev/null; then
+    log_warn "Python 3 not found - skipping comprehensive report generation"
+    log_warn "Install Python 3 to enable comprehensive HTML/Markdown reports"
+    return 0
+  fi
+  
+  # Determine which report generator to use
+  local GENERATOR_CMD=""
+  
+  # First, check if report_generator.py exists in the same directory as the script
+  if [[ -f "$REPORT_GENERATOR" ]]; then
+    GENERATOR_CMD="python3 $REPORT_GENERATOR"
+    log "Using local report generator: $REPORT_GENERATOR"
+  # Check if it's installed as a command
+  elif command -v safetyscan-report-generator &>/dev/null; then
+    GENERATOR_CMD="safetyscan-report-generator"
+    log "Using installed report generator: safetyscan-report-generator"
+  # Check common installation paths
+  elif [[ -f "/usr/local/bin/safetyscan-report-generator" ]]; then
+    GENERATOR_CMD="/usr/local/bin/safetyscan-report-generator"
+    log "Using system report generator: /usr/local/bin/safetyscan-report-generator"
+  else
+    log_warn "Report generator script not found"
+    log_warn "Comprehensive HTML/Markdown reports will not be generated"
+    log "Expected locations:"
+    log "  - $REPORT_GENERATOR (local)"
+    log "  - /usr/local/bin/safetyscan-report-generator (installed)"
+    return 0
+  fi
+  
+  # Run the report generator
+  log "Executing: $GENERATOR_CMD \"$RUN_DIR\" \"$PROJECT_NAME\""
+  
+  if $GENERATOR_CMD "$RUN_DIR" "$PROJECT_NAME" 2>&1; then
+    log_success "Comprehensive reports generated successfully!"
+    
+    # Check if files were created
+    if [[ -f "$RUN_DIR/comprehensive-security-report.html" ]]; then
+      log_success "HTML Report: $RUN_DIR/comprehensive-security-report.html"
+    fi
+    
+    if [[ -f "$RUN_DIR/comprehensive-security-report.md" ]]; then
+      log_success "Markdown Report: $RUN_DIR/comprehensive-security-report.md"
+    fi
+  else
+    log_error "Failed to generate comprehensive report"
+    log_warn "Basic reports are still available in: $RUN_DIR"
+    return 1
+  fi
+}
+
 # Generate overall summary
 generate_overall_summary() {
   local overall_summary="$RUN_DIR/SCAN-SUMMARY.txt"
@@ -415,6 +487,16 @@ EOF
 
 EOF
     fi
+  fi
+
+  # Check if comprehensive reports were generated
+  if [[ -f "$RUN_DIR/comprehensive-security-report.html" ]]; then
+    cat >> "$overall_summary" <<EOF
+✓ COMPREHENSIVE REPORTS GENERATED
+  HTML: comprehensive-security-report.html
+  Markdown: comprehensive-security-report.md
+
+EOF
   fi
 
   cat >> "$overall_summary" <<EOF
@@ -471,7 +553,7 @@ EOF
 
 NEXT STEPS:
   1. Review detailed reports in: $RUN_DIR
-  2. Open HTML reports in browser for better visualization
+  2. Open comprehensive-security-report.html in browser for best view
   3. Prioritize fixes based on severity
   4. Re-run scans after applying fixes
   5. Integrate scans into CI/CD pipeline
@@ -498,11 +580,21 @@ if [[ "$MODE" == "dast" ]] || [[ "$MODE" == "both" ]]; then
   fi
 fi
 
+# Generate comprehensive report (new feature!)
+generate_comprehensive_report
+
 # Generate overall summary
 generate_overall_summary
 
 log "═══════════════════════════════════════════════════════════"
 log_success "Scan complete! All reports saved to: $RUN_DIR"
 log "View SCAN-SUMMARY.txt for an overview"
+
+if [[ -f "$RUN_DIR/comprehensive-security-report.html" ]]; then
+  log "═══════════════════════════════════════════════════════════"
+  log_success "🎉 COMPREHENSIVE REPORT AVAILABLE!"
+  log "Open in browser: $RUN_DIR/comprehensive-security-report.html"
+  log "═══════════════════════════════════════════════════════════"
+fi
 
 exit 0

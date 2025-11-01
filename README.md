@@ -4,6 +4,12 @@
 
 ### Automated Security Scanning Tool for Linux
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/Platform-Linux-blue.svg)](https://www.linux.org/)
+[![Bash](https://img.shields.io/badge/Bash-4EAA25?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Semgrep](https://img.shields.io/badge/Powered%20by-Semgrep-orange)](https://semgrep.dev/)
+[![OWASP ZAP](https://img.shields.io/badge/Powered%20by-OWASP%20ZAP-red)](https://www.zaproxy.org/)
 
 **Comprehensive SAST & DAST security testing in one powerful command**
 
@@ -79,6 +85,7 @@
 | **Disk Space** | 5 GB free space |
 | **Docker** | Version 20.10+ |
 | **Shell** | Bash 4.0+ |
+| **Python** | Python 3.6+ (optional, for comprehensive reports) |
 
 ### Tested Distributions
 
@@ -88,6 +95,13 @@
 - ✅ Fedora 35+
 - ✅ Arch Linux
 - ✅ Linux Mint 20+
+
+### Optional Dependencies
+
+| Component | Purpose | Installation |
+|-----------|---------|--------------|
+| **Python 3** | Generate comprehensive HTML/MD reports | `sudo apt install python3` (Ubuntu/Debian) |
+| **jq** | Enhanced JSON parsing in summaries | `sudo apt install jq` (Ubuntu/Debian) |
 
 ---
 
@@ -192,7 +206,7 @@ docker run hello-world
 
 ```bash
 # Clone the repository
-git clone https://github.com/IsMohit/SafetyScan-Automated-Security-Scanning-Tool-for-Linux.git
+git clone https://github.com/IsMohit/SafetyScan-Automated-Security-Scanning-Tool-for-Linux-.git
 
 # Navigate to directory
 cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux-
@@ -340,15 +354,52 @@ After scanning, all reports are saved in a timestamped directory:
 <project_root>/
 └── reports/
     └── <project_name>_YYYYMMDD_HHMMSS/
-        ├── semgrep.json                 # Raw SAST output (machine-readable)
-        ├── semgrep-summary.txt          # SAST findings summary (human-readable)
-        ├── zap-report.html              # Full DAST report (browser-friendly)
-        ├── zap-report.json              # Raw DAST output (machine-readable)
-        ├── zap-warnings.html            # Critical DAST warnings (prioritized)
-        └── scan-summary.txt             # Overall scan overview
+        ├── semgrep.json                          # Raw SAST output (machine-readable)
+        ├── semgrep-summary.txt                   # SAST findings summary (human-readable)
+        ├── zap-report.html                       # Full DAST report (browser-friendly)
+        ├── zap-report.json                       # Raw DAST output (machine-readable)
+        ├── zap-warnings.html                     # Critical DAST warnings (prioritized)
+        ├── scan-summary.txt                      # Overall scan overview
+        ├── comprehensive-security-report.html    # 🆕 Comprehensive HTML report
+        └── comprehensive-security-report.md      # 🆕 Comprehensive Markdown report
 ```
 
-### Report File Descriptions
+### 🆕 Comprehensive Security Reports
+
+SafetyScan now generates **beautiful, detailed, and organized comprehensive reports** that combine both SAST and DAST findings into a single, easy-to-read document!
+
+#### Features of Comprehensive Reports:
+
+- **📊 Executive Summary Dashboard** - Visual overview of all findings by severity
+- **🎨 Professional Design** - Beautiful HTML with gradient headers and color-coded severity badges
+- **📋 Table of Contents** - Easy navigation through all findings
+- **🔍 Detailed Findings** - Each vulnerability includes:
+  - Severity level with color coding
+  - Complete description and context
+  - File location and line numbers (SAST)
+  - Affected URLs (DAST)
+  - CWE/OWASP mappings
+  - Remediation guidance
+  - Code snippets (when applicable)
+- **💡 Smart Recommendations** - Prioritized action items based on findings
+- **📚 Security Resources** - Links to OWASP, CWE, and documentation
+- **🖨️ Print-Friendly** - Optimized CSS for PDF export
+
+#### Report Formats:
+
+1. **HTML Report** (`comprehensive-security-report.html`)
+   - Open in any browser
+   - Interactive and visually appealing
+   - Perfect for sharing with stakeholders
+   - Can be converted to PDF
+
+2. **Markdown Report** (`comprehensive-security-report.md`)
+   - Text-based, version control friendly
+   - Easy to include in documentation
+   - Compatible with GitHub, GitLab, etc.
+   - Simple to parse programmatically
+
+### Traditional Report Files
 
 | File | Format | Purpose | Best For |
 |------|--------|---------|----------|
@@ -358,10 +409,57 @@ After scanning, all reports are saved in a timestamped directory:
 | `zap-report.json` | JSON | Structured DAST findings | Automation, tracking, dashboards |
 | `zap-warnings.html` | HTML | High-priority vulnerabilities | Immediate action items |
 | `scan-summary.txt` | Text | Combined SAST + DAST overview | Executive summary |
+| **`comprehensive-security-report.html`** | **HTML** | **🆕 Complete security analysis** | **Primary report for all stakeholders** |
+| **`comprehensive-security-report.md`** | **Markdown** | **🆕 Text-based full report** | **Documentation, version control** |
 
 ---
 
 ## 🔧 Technical Architecture
+
+### Report Generation Pipeline
+
+SafetyScan uses a **two-stage architecture** for comprehensive reporting:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Bash Script (safetyscan.sh)          │
+│                                                           │
+│  ┌──────────────┐        ┌──────────────┐               │
+│  │ SAST Scan    │        │ DAST Scan    │               │
+│  │ (Semgrep)    │        │ (OWASP ZAP)  │               │
+│  └──────┬───────┘        └──────┬───────┘               │
+│         │                       │                        │
+│         ▼                       ▼                        │
+│  ┌────────────────────────────────────┐                 │
+│  │  semgrep.json     zap-report.json  │                 │
+│  └────────────┬───────────────────────┘                 │
+│               │                                          │
+│               ▼                                          │
+│  ┌────────────────────────────────────┐                 │
+│  │  Python Report Generator            │                 │
+│  │  (report_generator.py)              │                 │
+│  │                                      │                 │
+│  │  • Parses JSON outputs               │                 │
+│  │  • Categorizes by severity           │                 │
+│  │  • Generates statistics              │                 │
+│  │  • Creates beautiful HTML            │                 │
+│  │  • Exports Markdown                  │                 │
+│  └────────────┬───────────────────────┘                 │
+│               │                                          │
+│               ▼                                          │
+│  ┌────────────────────────────────────┐                 │
+│  │  Comprehensive Reports              │                 │
+│  │  • HTML with CSS styling            │                 │
+│  │  • Markdown for documentation       │                 │
+│  └────────────────────────────────────┘                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Benefits of this architecture:**
+- ✅ Modular design - each component can be updated independently
+- ✅ Language-specific strengths - Bash for orchestration, Python for data processing
+- ✅ Fallback support - Works even if Python is not available
+- ✅ Extensible - Easy to add new report formats or analysis tools
 
 ### SAST Engine: Semgrep
 
@@ -495,12 +593,89 @@ safetyscan ./myapp --mode dast --start "npm start" --port 3001
 </details>
 
 <details>
+<summary><b>🔴 Comprehensive reports not generated</b></summary>
+
+**Issue:** HTML/Markdown comprehensive reports are missing
+
+**Symptoms:**
+```
+⚠ Python 3 not found - skipping comprehensive report generation
+```
+
+**Solution:**
+```bash
+# Check Python installation
+python3 --version
+
+# Install Python 3 if not present
+# Ubuntu/Debian
+sudo apt install python3
+
+# CentOS/RHEL
+sudo yum install python3
+
+# Fedora
+sudo dnf install python3
+
+# Verify report generator is installed
+which safetyscan-report-generator
+ls -la /usr/local/bin/safetyscan-report-generator
+
+# Reinstall if needed
+cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux
+sudo ./install.sh
+```
+
+**Note:** Basic reports (JSON, TXT, HTML from ZAP) will still be generated even without Python.
+
+</details>
+
+<details>
+<summary><b>🔴 White text in HTML report</b></summary>
+
+**Issue:** Text appears white on white background in comprehensive report
+
+**Solution:**
+This has been fixed in the latest version. Update your installation:
+```bash
+cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux
+git pull origin main
+sudo ./install.sh
+
+# Or manually update report generator
+sudo cp report_generator.py /usr/local/bin/safetyscan-report-generator
+sudo chmod +x /usr/local/bin/safetyscan-report-generator
+```
+
+</details>
+
+<details>
+<summary><b>🔴 HTML tags visible in report</b></summary>
+
+**Issue:** Seeing `<p>`, `<br>` tags in descriptions and solutions
+
+**Solution:**
+This has been fixed in the latest version. The report generator now:
+- Strips HTML tags from OWASP ZAP output
+- Preserves formatting by converting tags to newlines
+- Properly escapes content for display
+
+Update to the latest version:
+```bash
+cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux
+git pull origin main
+sudo ./install.sh
+```
+
+</details>
+
+<details>
 <summary><b>🔴 Command not found: safetyscan</b></summary>
 
 **Solution:**
 ```bash
 # Reinstall with proper permissions
-cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux
+cd SafetyScan-Automated-Security-Scanning-Tool-for-Linux-
 sudo ./install.sh
 
 # OR manually copy
@@ -633,6 +808,17 @@ If SafetyScan helps secure your applications, please consider:
 - 🤝 **Contributing** to the codebase
 
 ---
+
+## 📊 Project Stats
+
+![GitHub stars](https://img.shields.io/github/stars/IsMohit/SafetyScan-Automated-Security-Scanning-Tool-for-Linux-?style=social)
+![GitHub forks](https://img.shields.io/github/forks/IsMohit/SafetyScan-Automated-Security-Scanning-Tool-for-Linux-?style=social)
+![GitHub issues](https://img.shields.io/github/issues/IsMohit/SafetyScan-Automated-Security-Scanning-Tool-for-Linux-)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/IsMohit/SafetyScan-Automated-Security-Scanning-Tool-for-Linux-)
+
+---
+
+<div align="center">
 
 **Made with ❤️ for the Linux Community**
 
